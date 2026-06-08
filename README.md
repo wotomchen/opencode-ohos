@@ -31,25 +31,19 @@ OpenCode AI 编程助手的鸿蒙（HarmonyOS）自包含运行包。
 ### 方法一：从 tar.gz 安装（推荐）
 
 ```sh
-curl -fsSL https://gitcode.com/wotomchen/opencode-ohos/releases/latest/download/install-opencode-ohos.sh | sh
-```
-
-指定版本：
-
-```sh
-OPENCODE_VERSION=1.14.33 sh -c "$(curl -fsSL https://gitcode.com/wotomchen/opencode-ohos/releases/latest/download/install-opencode-ohos.sh)"
+curl -fsSL https://gitcode.com/wotomchen/opencode-ohos/releases/download/OpenCode-1.14.33-ohos-v0/install-opencode-ohos.sh | sh
 ```
 
 ### 方法二：从 Git 仓库克隆
 
 ```sh
-curl -fsSL https://gitcode.com/wotomchen/opencode-ohos/releases/latest/download/install-opencode-ohos-git.sh | sh
+curl -fsSL https://gitcode.com/wotomchen/opencode-ohos/releases/download/OpenCode-1.14.33-ohos-v0/install-opencode-ohos-git.sh | sh
 ```
 
 保留 `.git` 以便后续 `git pull` 更新：
 
 ```sh
-KEEP_GIT_DIR=true sh -c "$(curl -fsSL https://gitcode.com/wotomchen/opencode-ohos/releases/latest/download/install-opencode-ohos-git.sh)"
+KEEP_GIT_DIR=true sh -c "$(curl -fsSL https://gitcode.com/wotomchen/opencode-ohos/releases/download/OpenCode-1.14.33-ohos-v0/install-opencode-ohos-git.sh)"
 ```
 
 安装脚本会自动执行以下操作：
@@ -111,10 +105,28 @@ opencode
 如需手动签名（脚本未找到 `binary-sign-tool` 时）：
 
 ```sh
-source ~/.zshrc   # 加载 sign 命令
-sign ~/.opencode/node/node
-sign ~/.opencode/node_modules/better-sqlite3/build/Release/better_sqlite3.node
-# ... 以此类推
+# 逐个文件签名（需先找到 binary-sign-tool）
+BIN_TOOL="$HOME/.local/bin/binary-sign-tool"  # 常见路径
+# BIN_TOOL="/usr/local/bin/binary-sign-tool"  # 备选路径
+
+sign_file() {
+  f="$1"
+  if [ ! -f "$f" ] || ! file "$f" | grep -q "ELF"; then
+    echo "not an ELF binary: $f"
+    return 1
+  fi
+  mv "$f" "${f}-unsigned" && \
+  "$BIN_TOOL" sign -inFile "${f}-unsigned" -outFile "$f" -selfSign "1" && \
+  chmod +x "$f"
+}
+
+sign_file ~/.opencode/node/node
+sign_file ~/.opencode/node_modules/better-sqlite3/build/Release/better_sqlite3.node
+sign_file ~/.opencode/node_modules/@lydell/node-pty-openharmony-arm64/prebuilds/openharmony-arm64/pty.node
+sign_file ~/.opencode/node_modules/@lydell/node-pty-openharmony-arm64/prebuilds/openharmony-arm64/preload_tty.so
+sign_file ~/.opencode/node_modules/@opentui/core-openharmony-arm64/prebuilds/openharmony-arm64/libopentui.so
+sign_file ~/.opencode/node_modules/@parcel/watcher-openharmony-arm64/watcher.node
+sign_file ~/.opencode/node_modules/@koromix/koffi-openharmony-arm64/ohos_arm64/koffi.node
 ```
 
 ---
